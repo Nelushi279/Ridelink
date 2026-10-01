@@ -41,6 +41,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception) {
+        return error(HttpStatus.UNAUTHORIZED, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(AccountNotActiveException.class)
+    public ResponseEntity<ApiError> handleAccountNotActive(AccountNotActiveException exception) {
+        return error(HttpStatus.FORBIDDEN, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception) {
         log.error("Unexpected account-service error", exception);
