@@ -7,12 +7,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import com.ridelink.account.config.SecurityConfig;
+import com.ridelink.account.security.JsonAuthenticationEntryPoint;
+import com.ridelink.account.security.JwtService;
 
 @WebMvcTest(HealthController.class)
+@Import({SecurityConfig.class, JsonAuthenticationEntryPoint.class})
 class HealthControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @Test
     void healthEndpointReturnsServiceStatus() throws Exception {

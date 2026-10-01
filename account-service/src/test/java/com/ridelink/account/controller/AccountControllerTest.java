@@ -13,17 +13,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.ridelink.account.dto.AccountResponse;
 import com.ridelink.account.dto.RegisterAccountRequest;
+import com.ridelink.account.config.SecurityConfig;
 import com.ridelink.account.exception.DuplicateEmailException;
+import com.ridelink.account.security.JsonAuthenticationEntryPoint;
+import com.ridelink.account.security.JwtService;
 import com.ridelink.account.model.AccountRole;
 import com.ridelink.account.model.AccountStatus;
 import com.ridelink.account.service.AccountService;
 
 @WebMvcTest(AccountController.class)
+@Import({SecurityConfig.class, JsonAuthenticationEntryPoint.class})
 class AccountControllerTest {
 
     private static final String VALID_REQUEST = """
@@ -41,6 +46,9 @@ class AccountControllerTest {
 
     @MockitoBean
     private AccountService accountService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     @Test
     void returnsCreatedAccountWithoutPassword() throws Exception {
