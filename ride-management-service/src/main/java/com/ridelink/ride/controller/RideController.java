@@ -1,5 +1,6 @@
 package com.ridelink.ride.controller;
 
+import com.ridelink.ride.dto.AssignDriverRequest;
 import com.ridelink.ride.dto.CreateRideRequest;
 import com.ridelink.ride.dto.RideResponse;
 import com.ridelink.ride.exception.ApiError;
@@ -16,6 +17,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,5 +61,22 @@ public class RideController {
     @ApiResponse(responseCode = "200", description = "Passenger rides returned")
     public List<RideResponse> getPassengerRides(@PathVariable String passengerAccountId) {
         return rideService.getRidesByPassenger(passengerAccountId);
+    }
+
+    @PatchMapping("/{rideId}/assign")
+    @Operation(summary = "Assign a driver to a requested ride")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Driver assigned"),
+        @ApiResponse(responseCode = "400", description = "Invalid assignment request",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Ride not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Ride is not in REQUESTED status",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public RideResponse assignDriver(
+            @PathVariable String rideId,
+            @Valid @RequestBody AssignDriverRequest request) {
+        return rideService.assignDriver(rideId, request);
     }
 }
