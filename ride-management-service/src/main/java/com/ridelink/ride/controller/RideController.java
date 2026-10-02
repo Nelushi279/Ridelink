@@ -79,4 +79,43 @@ public class RideController {
             @Valid @RequestBody AssignDriverRequest request) {
         return rideService.assignDriver(rideId, request);
     }
+
+    @PatchMapping("/{rideId}/accept")
+    @Operation(summary = "Accept an assigned ride")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ride accepted"),
+        @ApiResponse(responseCode = "404", description = "Ride not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Ride is not in ASSIGNED status",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public RideResponse acceptRide(@PathVariable String rideId) {
+        return rideService.acceptRide(rideId);
+    }
+
+    @PatchMapping("/{rideId}/start")
+    @Operation(summary = "Start an accepted ride")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ride started"),
+        @ApiResponse(responseCode = "404", description = "Ride not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Ride is not in ACCEPTED status",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public RideResponse startRide(@PathVariable String rideId) {
+        return rideService.startRide(rideId);
+    }
+
+    @PatchMapping("/{rideId}/complete")
+    @Operation(summary = "Complete an in-progress ride")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ride completed"),
+        @ApiResponse(responseCode = "404", description = "Ride not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Ride is not in IN_PROGRESS status",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public RideResponse completeRide(@PathVariable String rideId) {
+        return rideService.completeRide(rideId);
+    }
 }
