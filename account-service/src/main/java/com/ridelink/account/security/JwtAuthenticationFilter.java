@@ -6,12 +6,14 @@ import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import com.ridelink.account.model.AccountRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,8 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        AccountRole role;
+        try {
+            role = AccountRole.valueOf(claims.get("role", String.class));
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            reject(request, response);
+            return;
+        }
+
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of());
+                new UsernamePasswordAuthenticationToken(claims.getSubject(), null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role.name())));
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         try {

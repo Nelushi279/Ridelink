@@ -10,7 +10,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ridelink.account.security.JsonAuthenticationEntryPoint;
+import com.ridelink.account.security.JsonAccessDeniedHandler;
 import com.ridelink.account.security.JwtAuthenticationFilter;
 import com.ridelink.account.security.JwtService;
 
@@ -20,10 +22,13 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
+    private final JsonAccessDeniedHandler accessDeniedHandler;
 
-    public SecurityConfig(JwtService jwtService, JsonAuthenticationEntryPoint authenticationEntryPoint) {
+    public SecurityConfig(JwtService jwtService, JsonAuthenticationEntryPoint authenticationEntryPoint,
+                          ObjectMapper objectMapper) {
         this.jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, authenticationEntryPoint);
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = new JsonAccessDeniedHandler(objectMapper);
     }
 
     @Bean
@@ -32,11 +37,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/accounts/register", "/api/accounts/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health", "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/accounts/*/status").hasRole("ADMIN")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
