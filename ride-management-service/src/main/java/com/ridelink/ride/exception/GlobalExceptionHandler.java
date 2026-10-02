@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(InvalidRideStateException.class)
+    public ResponseEntity<ApiError> handleInvalidState(InvalidRideStateException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedError() {
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());

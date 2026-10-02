@@ -1,8 +1,10 @@
 package com.ridelink.ride.service;
 
+import com.ridelink.ride.dto.AssignDriverRequest;
 import com.ridelink.ride.dto.CreateRideRequest;
 import com.ridelink.ride.dto.LocationDto;
 import com.ridelink.ride.dto.RideResponse;
+import com.ridelink.ride.exception.InvalidRideStateException;
 import com.ridelink.ride.exception.RideNotFoundException;
 import com.ridelink.ride.model.Ride;
 import com.ridelink.ride.model.RideLocation;
@@ -43,6 +45,22 @@ public class RideService {
         return rideRepository.findByPassengerAccountId(passengerAccountId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public RideResponse assignDriver(String rideId, AssignDriverRequest request) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(rideId));
+        if (ride.getStatus() != RideStatus.REQUESTED) {
+            throw new InvalidRideStateException(ride.getStatus());
+        }
+
+        Instant now = Instant.now();
+        // Driver validation is deferred to the future Driver Service REST integration.
+        ride.setDriverId(request.driverId());
+        ride.setStatus(RideStatus.ASSIGNED);
+        ride.setAssignedAt(now);
+        ride.setUpdatedAt(now);
+        return toResponse(rideRepository.save(ride));
     }
 
     private RideLocation toModel(LocationDto location) {
