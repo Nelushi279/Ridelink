@@ -6,4 +6,8 @@ public class InvalidRideStateException extends RuntimeException {
     public InvalidRideStateException(RideStatus status) {
         super("Ride cannot be assigned from status " + status);
     }
+
+    public InvalidRideStateException(String action, RideStatus status) {
+        super("Ride cannot be " + action + " from status " + status);
+    }
 }

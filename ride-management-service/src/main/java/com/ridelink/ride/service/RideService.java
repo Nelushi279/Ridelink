@@ -63,6 +63,43 @@ public class RideService {
         return toResponse(rideRepository.save(ride));
     }
 
+    public RideResponse acceptRide(String rideId) {
+        Ride ride = findRideForTransition(rideId, RideStatus.ASSIGNED, "accepted");
+        Instant now = Instant.now();
+        ride.setStatus(RideStatus.ACCEPTED);
+        ride.setAcceptedAt(now);
+        ride.setUpdatedAt(now);
+        return toResponse(rideRepository.save(ride));
+    }
+
+    public RideResponse startRide(String rideId) {
+        Ride ride = findRideForTransition(rideId, RideStatus.ACCEPTED, "started");
+        Instant now = Instant.now();
+        ride.setStatus(RideStatus.IN_PROGRESS);
+        ride.setStartedAt(now);
+        ride.setUpdatedAt(now);
+        return toResponse(rideRepository.save(ride));
+    }
+
+    public RideResponse completeRide(String rideId) {
+        Ride ride = findRideForTransition(rideId, RideStatus.IN_PROGRESS, "completed");
+        Instant now = Instant.now();
+        ride.setStatus(RideStatus.COMPLETED);
+        ride.setCompletedAt(now);
+        ride.setUpdatedAt(now);
+        return toResponse(rideRepository.save(ride));
+    }
+
+    private Ride findRideForTransition(
+            String rideId, RideStatus requiredStatus, String action) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(rideId));
+        if (ride.getStatus() != requiredStatus) {
+            throw new InvalidRideStateException(action, ride.getStatus());
+        }
+        return ride;
+    }
+
     private RideLocation toModel(LocationDto location) {
         return new RideLocation(location.address(), location.latitude(), location.longitude());
     }
