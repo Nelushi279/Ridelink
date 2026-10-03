@@ -90,6 +90,22 @@ public class RideService {
         return toResponse(rideRepository.save(ride));
     }
 
+    public RideResponse cancelRide(String rideId) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(rideId));
+        if (ride.getStatus() != RideStatus.REQUESTED
+                && ride.getStatus() != RideStatus.ASSIGNED
+                && ride.getStatus() != RideStatus.ACCEPTED) {
+            throw new InvalidRideStateException("cancelled", ride.getStatus());
+        }
+
+        Instant now = Instant.now();
+        ride.setStatus(RideStatus.CANCELLED);
+        ride.setCancelledAt(now);
+        ride.setUpdatedAt(now);
+        return toResponse(rideRepository.save(ride));
+    }
+
     private Ride findRideForTransition(
             String rideId, RideStatus requiredStatus, String action) {
         Ride ride = rideRepository.findById(rideId)

@@ -118,4 +118,17 @@ public class RideController {
     public RideResponse completeRide(@PathVariable String rideId) {
         return rideService.completeRide(rideId);
     }
+
+    @PatchMapping("/{rideId}/cancel")
+    @Operation(summary = "Cancel a ride before it starts")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ride cancelled"),
+        @ApiResponse(responseCode = "404", description = "Ride not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Ride can no longer be cancelled",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public RideResponse cancelRide(@PathVariable String rideId) {
+        return rideService.cancelRide(rideId);
+    }
 }

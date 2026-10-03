@@ -30,6 +30,7 @@ class OpenApiTest {
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/assign']").exists())
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/accept']").exists())
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/start']").exists())
-                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/complete']").exists());
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/complete']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/cancel']").exists());
     }
 }
