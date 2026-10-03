@@ -93,6 +93,13 @@ public class DriverService {
  private DriverLocationResponse locationResponse(Driver driver) {
   return new DriverLocationResponse(driver.getId(), driver.getLatitude(), driver.getLongitude(), driver.getLocationUpdatedAt());
  }
+ public DriverEligibilityResponse getEligibility(String id) {
+  Driver driver = find(id);
+  boolean hasVehicle = vehicles.existsByDriverId(driver.getId());
+  boolean eligible = driver.getStatus() == DriverStatus.ACTIVE
+      && driver.getAvailability() == DriverAvailability.AVAILABLE && hasVehicle;
+  return new DriverEligibilityResponse(driver.getId(), driver.getStatus(), driver.getAvailability(), hasVehicle, eligible);
+ }
  private Driver find(String id) { return repository.findById(id).orElseThrow(() -> new DriverNotFoundException("Driver not found")); }
  private void validateExpiry(LocalDate date) {
   if(date==null || date.isBefore(LocalDate.now(ZoneId.of("Asia/Colombo")))) throw new InvalidDriverProfileException("License expiry date must be today or later");
