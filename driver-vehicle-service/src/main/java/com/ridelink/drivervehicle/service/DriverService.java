@@ -71,6 +71,28 @@ public class DriverService {
   driver.setUpdatedAt(Instant.now());
   return response(save(driver));
  }
+ public DriverLocationResponse updateLocation(String id, UpdateDriverLocationRequest request) {
+  Driver driver = find(id);
+  if (driver.getStatus() != DriverStatus.ACTIVE || driver.getAvailability() != DriverAvailability.AVAILABLE) {
+   throw new DriverLocationConflictException("Only ACTIVE and AVAILABLE drivers can update location");
+  }
+  driver.setLatitude(request.latitude());
+  driver.setLongitude(request.longitude());
+  Instant now = Instant.now();
+  driver.setLocationUpdatedAt(now);
+  driver.setUpdatedAt(now);
+  return locationResponse(save(driver));
+ }
+ public DriverLocationResponse getLocation(String id) {
+  Driver driver = find(id);
+  if (driver.getLatitude() == null || driver.getLongitude() == null || driver.getLocationUpdatedAt() == null) {
+   throw new DriverLocationNotAvailableException("Driver location not available");
+  }
+  return locationResponse(driver);
+ }
+ private DriverLocationResponse locationResponse(Driver driver) {
+  return new DriverLocationResponse(driver.getId(), driver.getLatitude(), driver.getLongitude(), driver.getLocationUpdatedAt());
+ }
  private Driver find(String id) { return repository.findById(id).orElseThrow(() -> new DriverNotFoundException("Driver not found")); }
  private void validateExpiry(LocalDate date) {
   if(date==null || date.isBefore(LocalDate.now(ZoneId.of("Asia/Colombo")))) throw new InvalidDriverProfileException("License expiry date must be today or later");
@@ -80,6 +102,6 @@ public class DriverService {
   catch(DuplicateKeyException e) { throw new DuplicateDriverException("Account ID or license number is already in use"); }
  }
  private DriverResponse response(Driver d) {
-  return new DriverResponse(d.getId(),d.getAccountId(),d.getFullName(),d.getPhoneNumber(),d.getLicenseNumber(),d.getLicenseExpiryDate(),d.getServiceArea(),d.getStatus(),d.getAvailability(),d.getCreatedAt(),d.getUpdatedAt());
+  return new DriverResponse(d.getId(),d.getAccountId(),d.getFullName(),d.getPhoneNumber(),d.getLicenseNumber(),d.getLicenseExpiryDate(),d.getServiceArea(),d.getStatus(),d.getAvailability(),d.getLatitude(),d.getLongitude(),d.getLocationUpdatedAt(),d.getCreatedAt(),d.getUpdatedAt());
  }
 }
