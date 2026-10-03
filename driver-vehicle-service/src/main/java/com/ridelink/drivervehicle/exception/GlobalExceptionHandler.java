@@ -19,6 +19,12 @@ public class GlobalExceptionHandler {
  public ResponseEntity<ApiError> duplicate(DuplicateDriverException e) { return error(409,e.getMessage(),Map.of()); }
  @ExceptionHandler(InvalidDriverProfileException.class)
  public ResponseEntity<ApiError> invalid(InvalidDriverProfileException e) { return error(400,e.getMessage(),Map.of()); }
+ @ExceptionHandler(VehicleNotFoundException.class)
+ public ResponseEntity<ApiError> vehicleNotFound(VehicleNotFoundException e) { return error(404,e.getMessage(),Map.of()); }
+ @ExceptionHandler(DuplicateVehicleException.class)
+ public ResponseEntity<ApiError> duplicateVehicle(DuplicateVehicleException e) { return error(409,e.getMessage(),Map.of()); }
+ @ExceptionHandler(InvalidVehicleException.class)
+ public ResponseEntity<ApiError> invalidVehicle(InvalidVehicleException e) { return error(400,e.getMessage(),Map.of()); }
  @ExceptionHandler(MethodArgumentNotValidException.class)
  public ResponseEntity<ApiError> validation(MethodArgumentNotValidException e) {
   Map<String,String> fields=new TreeMap<>();

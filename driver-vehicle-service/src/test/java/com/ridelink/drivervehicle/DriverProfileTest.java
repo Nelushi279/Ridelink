@@ -3,6 +3,7 @@ package com.ridelink.drivervehicle;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ridelink.drivervehicle.model.Driver;
 import com.ridelink.drivervehicle.repository.DriverRepository;
+import com.ridelink.drivervehicle.repository.VehicleRepository;
 import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.*;
@@ -25,6 +26,7 @@ class DriverProfileTest {
  @Autowired MockMvc mvc;
  @Autowired ObjectMapper json;
  @MockitoBean DriverRepository repository;
+ @MockitoBean VehicleRepository vehicleRepository;
  Map<String,Object> request;
  Driver saved;
  @BeforeEach void setup() {
