@@ -23,6 +23,7 @@ public class DriverService {
   d.setAccountId(r.accountId().trim()); d.setFullName(r.fullName().trim()); d.setPhoneNumber(r.phoneNumber().trim());
   d.setLicenseNumber(r.licenseNumber().trim()); d.setLicenseExpiryDate(r.licenseExpiryDate()); d.setServiceArea(r.serviceArea().trim());
   d.setStatus(DriverStatus.PENDING);
+  d.setAvailability(DriverAvailability.UNAVAILABLE);
   Instant now=Instant.now(); d.setCreatedAt(now); d.setUpdatedAt(now);
   return response(save(d));
  }
@@ -47,11 +48,26 @@ public class DriverService {
   Driver driver = find(id);
   DriverStatus target = request.status();
   if (target == null) throw new InvalidDriverProfileException("Status must not be null");
-  if (target == driver.getStatus()) return response(driver);
+  boolean forceUnavailable = target != DriverStatus.ACTIVE
+      && driver.getAvailability() != DriverAvailability.UNAVAILABLE;
+  if (target == driver.getStatus() && !forceUnavailable) return response(driver);
   if (target == DriverStatus.ACTIVE && !vehicles.existsByDriverId(driver.getId())) {
    throw new DriverActivationConflictException("Driver cannot be activated without a registered vehicle");
   }
   driver.setStatus(target);
+  if (target != DriverStatus.ACTIVE) driver.setAvailability(DriverAvailability.UNAVAILABLE);
+  driver.setUpdatedAt(Instant.now());
+  return response(save(driver));
+ }
+ public DriverResponse updateAvailability(String id, UpdateDriverAvailabilityRequest request) {
+  Driver driver = find(id);
+  DriverAvailability target = request.availability();
+  if (target == null) throw new InvalidDriverProfileException("Availability must not be null");
+  if (target == DriverAvailability.AVAILABLE && driver.getStatus() != DriverStatus.ACTIVE) {
+   throw new DriverAvailabilityConflictException("Only ACTIVE drivers can become available");
+  }
+  if (target == driver.getAvailability()) return response(driver);
+  driver.setAvailability(target);
   driver.setUpdatedAt(Instant.now());
   return response(save(driver));
  }
@@ -64,6 +80,6 @@ public class DriverService {
   catch(DuplicateKeyException e) { throw new DuplicateDriverException("Account ID or license number is already in use"); }
  }
  private DriverResponse response(Driver d) {
-  return new DriverResponse(d.getId(),d.getAccountId(),d.getFullName(),d.getPhoneNumber(),d.getLicenseNumber(),d.getLicenseExpiryDate(),d.getServiceArea(),d.getStatus(),d.getCreatedAt(),d.getUpdatedAt());
+  return new DriverResponse(d.getId(),d.getAccountId(),d.getFullName(),d.getPhoneNumber(),d.getLicenseNumber(),d.getLicenseExpiryDate(),d.getServiceArea(),d.getStatus(),d.getAvailability(),d.getCreatedAt(),d.getUpdatedAt());
  }
 }
