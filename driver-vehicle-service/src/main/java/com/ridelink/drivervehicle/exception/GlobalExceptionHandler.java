@@ -29,6 +29,10 @@ public class GlobalExceptionHandler {
  public ResponseEntity<ApiError> activationConflict(DriverActivationConflictException e) { return error(409,e.getMessage(),Map.of()); }
  @ExceptionHandler(DriverAvailabilityConflictException.class)
  public ResponseEntity<ApiError> availabilityConflict(DriverAvailabilityConflictException e) { return error(409,e.getMessage(),Map.of()); }
+ @ExceptionHandler(DriverLocationConflictException.class)
+ public ResponseEntity<ApiError> locationConflict(DriverLocationConflictException e) { return error(409,e.getMessage(),Map.of()); }
+ @ExceptionHandler(DriverLocationNotAvailableException.class)
+ public ResponseEntity<ApiError> locationNotAvailable(DriverLocationNotAvailableException e) { return error(404,e.getMessage(),Map.of()); }
  @ExceptionHandler(MethodArgumentNotValidException.class)
  public ResponseEntity<ApiError> validation(MethodArgumentNotValidException e) {
   Map<String,String> fields=new TreeMap<>();

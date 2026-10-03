@@ -37,6 +37,15 @@ public DriverAvailability getAvailability() {
     return availability == null ? DriverAvailability.UNAVAILABLE : availability;
 }
 public void setAvailability(DriverAvailability value) { this.availability = value; }
+private Double latitude;
+public Double getLatitude() { return latitude; }
+public void setLatitude(Double value) { this.latitude = value; }
+private Double longitude;
+public Double getLongitude() { return longitude; }
+public void setLongitude(Double value) { this.longitude = value; }
+private Instant locationUpdatedAt;
+public Instant getLocationUpdatedAt() { return locationUpdatedAt; }
+public void setLocationUpdatedAt(Instant value) { this.locationUpdatedAt = value; }
 private Instant createdAt;
 public Instant getCreatedAt() { return createdAt; }
 public void setCreatedAt(Instant value) { this.createdAt = value; }

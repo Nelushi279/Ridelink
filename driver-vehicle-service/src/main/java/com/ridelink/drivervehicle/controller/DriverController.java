@@ -84,4 +84,29 @@ public class DriverController {
   @Valid @RequestBody UpdateDriverAvailabilityRequest request) {
   return service.updateAvailability(driverId, request);
  }
+ @PatchMapping("/{driverId}/location")
+ @Operation(summary = "Report current driver location",
+  description = "Requires ACTIVE status and AVAILABLE availability. Stores only the latest coordinates and refreshes both timestamps. Authentication and authorization are not implemented.")
+ @ApiResponses({
+  @ApiResponse(responseCode = "200", description = "Location updated", content = @Content(schema = @Schema(implementation = DriverLocationResponse.class))),
+  @ApiResponse(responseCode = "400", description = "Missing, invalid or malformed coordinates", content = @Content(schema = @Schema(implementation = ApiError.class))),
+  @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content(schema = @Schema(implementation = ApiError.class))),
+  @ApiResponse(responseCode = "409", description = "Only ACTIVE and AVAILABLE drivers can update location", content = @Content(schema = @Schema(implementation = ApiError.class)))
+ })
+ public DriverLocationResponse updateLocation(
+  @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId,
+  @Valid @RequestBody UpdateDriverLocationRequest request) {
+  return service.updateLocation(driverId, request);
+ }
+ @GetMapping("/{driverId}/location")
+ @Operation(summary = "Get the last known driver location",
+  description = "Returns 404 if the driver does not exist or has no reported location. Last known coordinates remain readable after status or availability changes.")
+ @ApiResponses({
+  @ApiResponse(responseCode = "200", description = "Last known location", content = @Content(schema = @Schema(implementation = DriverLocationResponse.class))),
+  @ApiResponse(responseCode = "404", description = "Driver or reported location not found", content = @Content(schema = @Schema(implementation = ApiError.class)))
+ })
+ public DriverLocationResponse getLocation(
+  @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId) {
+  return service.getLocation(driverId);
+ }
 }
