@@ -5,11 +5,16 @@ import org.springframework.dao.DuplicateKeyException;
 import com.ridelink.drivervehicle.dto.*;
 import com.ridelink.drivervehicle.model.*;
 import com.ridelink.drivervehicle.repository.DriverRepository;
+import com.ridelink.drivervehicle.repository.VehicleRepository;
 import com.ridelink.drivervehicle.exception.*;
 @Service
 public class DriverService {
  private final DriverRepository repository;
- public DriverService(DriverRepository repository) { this.repository=repository; }
+ private final VehicleRepository vehicles;
+ public DriverService(DriverRepository repository, VehicleRepository vehicles) {
+  this.repository=repository;
+  this.vehicles=vehicles;
+ }
  public DriverResponse create(CreateDriverRequest r) {
   validateExpiry(r.licenseExpiryDate());
   if(repository.existsByAccountId(r.accountId().trim())) throw new DuplicateDriverException("A driver profile already exists for this accountId");
@@ -37,6 +42,18 @@ public class DriverService {
   if(r.licenseExpiryDate()!=null) d.setLicenseExpiryDate(r.licenseExpiryDate());
   if(r.serviceArea()!=null) d.setServiceArea(r.serviceArea().trim());
   d.setUpdatedAt(Instant.now()); return response(save(d));
+ }
+ public DriverResponse updateStatus(String id, UpdateDriverStatusRequest request) {
+  Driver driver = find(id);
+  DriverStatus target = request.status();
+  if (target == null) throw new InvalidDriverProfileException("Status must not be null");
+  if (target == driver.getStatus()) return response(driver);
+  if (target == DriverStatus.ACTIVE && !vehicles.existsByDriverId(driver.getId())) {
+   throw new DriverActivationConflictException("Driver cannot be activated without a registered vehicle");
+  }
+  driver.setStatus(target);
+  driver.setUpdatedAt(Instant.now());
+  return response(save(driver));
  }
  private Driver find(String id) { return repository.findById(id).orElseThrow(() -> new DriverNotFoundException("Driver not found")); }
  private void validateExpiry(LocalDate date) {
