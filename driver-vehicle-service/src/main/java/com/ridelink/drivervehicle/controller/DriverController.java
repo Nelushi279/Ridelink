@@ -58,7 +58,7 @@ public class DriverController {
  public DriverResponse update(@PathVariable String driverId,@Valid @RequestBody UpdateDriverRequest request) { return service.update(driverId,request); }
  @PatchMapping("/{driverId}/status")
  @Operation(summary = "Set driver status",
-  description = "Supports PENDING, ACTIVE, INACTIVE and SUSPENDED. Becoming ACTIVE requires a registered vehicle. Repeating the current status returns the unchanged profile. Authentication and authorization are not implemented.")
+  description = "Supports PENDING, ACTIVE, INACTIVE and SUSPENDED. Becoming ACTIVE requires a registered vehicle. Non-ACTIVE statuses force UNAVAILABLE; activation does not opt into availability. Repeating a consistent current status returns the unchanged profile. Authentication and authorization are not implemented.")
  @ApiResponses({
   @ApiResponse(responseCode = "200", description = "Status updated or already current", content = @Content(schema = @Schema(implementation = DriverResponse.class))),
   @ApiResponse(responseCode = "400", description = "Missing, null or malformed status", content = @Content(schema = @Schema(implementation = ApiError.class))),
@@ -69,5 +69,19 @@ public class DriverController {
   @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId,
   @Valid @RequestBody UpdateDriverStatusRequest request) {
   return service.updateStatus(driverId, request);
+ }
+ @PatchMapping("/{driverId}/availability")
+ @Operation(summary = "Set driver availability",
+  description = "AVAILABLE requires ACTIVE status. UNAVAILABLE is allowed for any status. Repeating unchanged availability preserves timestamps. Authentication and authorization are not implemented.")
+ @ApiResponses({
+  @ApiResponse(responseCode = "200", description = "Availability updated or already current", content = @Content(schema = @Schema(implementation = DriverResponse.class))),
+  @ApiResponse(responseCode = "400", description = "Missing, null or malformed availability", content = @Content(schema = @Schema(implementation = ApiError.class))),
+  @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content(schema = @Schema(implementation = ApiError.class))),
+  @ApiResponse(responseCode = "409", description = "Only ACTIVE drivers can become available", content = @Content(schema = @Schema(implementation = ApiError.class)))
+ })
+ public DriverResponse updateAvailability(
+  @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId,
+  @Valid @RequestBody UpdateDriverAvailabilityRequest request) {
+  return service.updateAvailability(driverId, request);
  }
 }

@@ -32,6 +32,11 @@ public void setServiceArea(String value) { this.serviceArea = value; }
 private DriverStatus status;
 public DriverStatus getStatus() { return status; }
 public void setStatus(DriverStatus value) { this.status = value; }
+private DriverAvailability availability = DriverAvailability.UNAVAILABLE;
+public DriverAvailability getAvailability() {
+    return availability == null ? DriverAvailability.UNAVAILABLE : availability;
+}
+public void setAvailability(DriverAvailability value) { this.availability = value; }
 private Instant createdAt;
 public Instant getCreatedAt() { return createdAt; }
 public void setCreatedAt(Instant value) { this.createdAt = value; }
