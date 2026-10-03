@@ -109,4 +109,15 @@ public class DriverController {
   @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId) {
   return service.getLocation(driverId);
  }
+ @GetMapping("/{driverId}/eligibility")
+ @Operation(summary = "Check driver eligibility for a ride",
+  description = "Read-only contract for future Ride Management validation. Eligibility requires ACTIVE + AVAILABLE + at least one registered vehicle. Existing ineligible drivers return 200 with eligible=false; unknown drivers return 404. No state, location or timestamps are changed. Authentication and service-to-service authorization are not implemented.")
+ @ApiResponses({
+  @ApiResponse(responseCode = "200", description = "Current eligibility, including ineligible drivers", content = @Content(schema = @Schema(implementation = DriverEligibilityResponse.class))),
+  @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content(schema = @Schema(implementation = ApiError.class)))
+ })
+ public DriverEligibilityResponse getEligibility(
+  @Parameter(description = "Driver profile ID", required = true) @PathVariable String driverId) {
+  return service.getEligibility(driverId);
+ }
 }
