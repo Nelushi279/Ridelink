@@ -1,0 +1,1 @@
+package com.ridelink.drivervehicle.model; public enum DriverStatus { PENDING, ACTIVE, INACTIVE, SUSPENDED }

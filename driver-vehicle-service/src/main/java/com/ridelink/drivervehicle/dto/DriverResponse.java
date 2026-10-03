@@ -1,0 +1,1 @@
+package com.ridelink.drivervehicle.dto; import java.time.*; import com.ridelink.drivervehicle.model.DriverStatus; public record DriverResponse(String id, String accountId, String fullName, String phoneNumber, String licenseNumber, LocalDate licenseExpiryDate, String serviceArea, DriverStatus status, Instant createdAt, Instant updatedAt) {}

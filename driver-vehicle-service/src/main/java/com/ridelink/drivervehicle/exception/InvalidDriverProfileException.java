@@ -1,0 +1,1 @@
+package com.ridelink.drivervehicle.exception; public class InvalidDriverProfileException extends RuntimeException { public InvalidDriverProfileException(String message) { super(message); } }
