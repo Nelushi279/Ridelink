@@ -25,6 +25,8 @@ public class GlobalExceptionHandler {
  public ResponseEntity<ApiError> duplicateVehicle(DuplicateVehicleException e) { return error(409,e.getMessage(),Map.of()); }
  @ExceptionHandler(InvalidVehicleException.class)
  public ResponseEntity<ApiError> invalidVehicle(InvalidVehicleException e) { return error(400,e.getMessage(),Map.of()); }
+ @ExceptionHandler(DriverActivationConflictException.class)
+ public ResponseEntity<ApiError> activationConflict(DriverActivationConflictException e) { return error(409,e.getMessage(),Map.of()); }
  @ExceptionHandler(MethodArgumentNotValidException.class)
  public ResponseEntity<ApiError> validation(MethodArgumentNotValidException e) {
   Map<String,String> fields=new TreeMap<>();
