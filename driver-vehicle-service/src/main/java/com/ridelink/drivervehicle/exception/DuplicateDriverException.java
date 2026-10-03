@@ -1,0 +1,1 @@
+package com.ridelink.drivervehicle.exception; public class DuplicateDriverException extends RuntimeException { public DuplicateDriverException(String message) { super(message); } }

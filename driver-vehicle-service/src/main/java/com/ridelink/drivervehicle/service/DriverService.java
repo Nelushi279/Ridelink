@@ -1,0 +1,52 @@
+package com.ridelink.drivervehicle.service;
+import java.time.*;
+import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
+import com.ridelink.drivervehicle.dto.*;
+import com.ridelink.drivervehicle.model.*;
+import com.ridelink.drivervehicle.repository.DriverRepository;
+import com.ridelink.drivervehicle.exception.*;
+@Service
+public class DriverService {
+ private final DriverRepository repository;
+ public DriverService(DriverRepository repository) { this.repository=repository; }
+ public DriverResponse create(CreateDriverRequest r) {
+  validateExpiry(r.licenseExpiryDate());
+  if(repository.existsByAccountId(r.accountId().trim())) throw new DuplicateDriverException("A driver profile already exists for this accountId");
+  if(repository.existsByLicenseNumber(r.licenseNumber().trim())) throw new DuplicateDriverException("License number is already in use");
+  Driver d=new Driver();
+  d.setAccountId(r.accountId().trim()); d.setFullName(r.fullName().trim()); d.setPhoneNumber(r.phoneNumber().trim());
+  d.setLicenseNumber(r.licenseNumber().trim()); d.setLicenseExpiryDate(r.licenseExpiryDate()); d.setServiceArea(r.serviceArea().trim());
+  d.setStatus(DriverStatus.PENDING);
+  Instant now=Instant.now(); d.setCreatedAt(now); d.setUpdatedAt(now);
+  return response(save(d));
+ }
+ public DriverResponse getById(String id) { return response(find(id)); }
+ public DriverResponse getByAccountId(String accountId) {
+  return response(repository.findByAccountId(accountId).orElseThrow(() -> new DriverNotFoundException("Driver not found")));
+ }
+ public DriverResponse update(String id,UpdateDriverRequest r) {
+  if(r.isEmpty()) throw new InvalidDriverProfileException("At least one profile field is required");
+  Driver d=find(id);
+  if(r.licenseExpiryDate()!=null) validateExpiry(r.licenseExpiryDate());
+  if(r.licenseNumber()!=null && !r.licenseNumber().trim().equals(d.getLicenseNumber()) && repository.existsByLicenseNumber(r.licenseNumber().trim()))
+   throw new DuplicateDriverException("License number is already in use");
+  if(r.fullName()!=null) d.setFullName(r.fullName().trim());
+  if(r.phoneNumber()!=null) d.setPhoneNumber(r.phoneNumber().trim());
+  if(r.licenseNumber()!=null) d.setLicenseNumber(r.licenseNumber().trim());
+  if(r.licenseExpiryDate()!=null) d.setLicenseExpiryDate(r.licenseExpiryDate());
+  if(r.serviceArea()!=null) d.setServiceArea(r.serviceArea().trim());
+  d.setUpdatedAt(Instant.now()); return response(save(d));
+ }
+ private Driver find(String id) { return repository.findById(id).orElseThrow(() -> new DriverNotFoundException("Driver not found")); }
+ private void validateExpiry(LocalDate date) {
+  if(date==null || date.isBefore(LocalDate.now(ZoneId.of("Asia/Colombo")))) throw new InvalidDriverProfileException("License expiry date must be today or later");
+ }
+ private Driver save(Driver d) {
+  try { return repository.save(d); }
+  catch(DuplicateKeyException e) { throw new DuplicateDriverException("Account ID or license number is already in use"); }
+ }
+ private DriverResponse response(Driver d) {
+  return new DriverResponse(d.getId(),d.getAccountId(),d.getFullName(),d.getPhoneNumber(),d.getLicenseNumber(),d.getLicenseExpiryDate(),d.getServiceArea(),d.getStatus(),d.getCreatedAt(),d.getUpdatedAt());
+ }
+}
