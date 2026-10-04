@@ -45,6 +45,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(ReceiptNotAvailableException.class)
+    public ResponseEntity<ApiError> handleReceiptNotAvailable(ReceiptNotAvailableException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedError() {
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());

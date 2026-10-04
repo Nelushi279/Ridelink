@@ -9,15 +9,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.ridelink.farepayment.dto.PaymentResponse;
+import com.ridelink.farepayment.dto.ReceiptResponse;
 import com.ridelink.farepayment.exception.FareAlreadyPaidException;
 import com.ridelink.farepayment.exception.FareNotFoundException;
 import com.ridelink.farepayment.exception.GlobalExceptionHandler;
 import com.ridelink.farepayment.exception.PaymentNotFoundException;
+import com.ridelink.farepayment.exception.ReceiptNotAvailableException;
 import com.ridelink.farepayment.model.PaymentMethod;
 import com.ridelink.farepayment.model.PaymentStatus;
 import com.ridelink.farepayment.service.PaymentService;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -109,6 +112,45 @@ class PaymentControllerTest {
         mockMvc.perform(get("/api/payments/missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Payment not found: missing"));
+    }
+
+    @Test
+    void getsReceiptOfCompletedPayment() throws Exception {
+        when(paymentService.getReceipt("pay-1")).thenReturn(new ReceiptResponse("RCP-ABC", "pay-1", "ride-1",
+                "fare-1", "acc-1", 10, 20, new BigDecimal("150.00"), new BigDecimal("800.00"),
+                new BigDecimal("100.00"), new BigDecimal("1050.00"), "LKR", PaymentMethod.CARD, "TXN-ABC", NOW));
+
+        mockMvc.perform(get("/api/payments/pay-1/receipt"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.receiptNumber").value("RCP-ABC"))
+                .andExpect(jsonPath("$.totalAmount").value(1050.00));
+    }
+
+    @Test
+    void receiptOfFailedPaymentIsConflict() throws Exception {
+        when(paymentService.getReceipt("pay-1")).thenThrow(new ReceiptNotAvailableException(PaymentStatus.FAILED));
+
+        mockMvc.perform(get("/api/payments/pay-1/receipt"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void getsRidePayments() throws Exception {
+        when(paymentService.getByRideId("ride-1")).thenReturn(List.of(response(PaymentStatus.COMPLETED)));
+
+        mockMvc.perform(get("/api/payments/ride/ride-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].rideId").value("ride-1"));
+    }
+
+    @Test
+    void passengerWithoutPaymentsGetsEmptyList() throws Exception {
+        when(paymentService.getByPassenger("acc-9")).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/payments/passenger/acc-9"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
     }
 
     private PaymentResponse response(PaymentStatus status) {
