@@ -30,9 +30,25 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler({PassengerAccountNotFoundException.class, DriverNotFoundException.class})
+    public ResponseEntity<ApiError> handleReferencedEntityNotFound(RuntimeException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(InvalidRideStateException.class)
     public ResponseEntity<ApiError> handleInvalidState(InvalidRideStateException exception) {
         return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler({InvalidPassengerException.class, InvalidDriverException.class})
+    public ResponseEntity<ApiError> handleInvalidExternalEntity(RuntimeException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public ResponseEntity<ApiError> handleExternalServiceUnavailable(
+            ExternalServiceUnavailableException exception) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), Map.of());
     }
 
     @ExceptionHandler(Exception.class)
