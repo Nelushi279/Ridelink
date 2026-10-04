@@ -40,6 +40,9 @@ class OpenApiTest {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/payments']").exists())
+                .andExpect(jsonPath("$.paths['/api/payments/{paymentId}/receipt']").exists())
+                .andExpect(jsonPath("$.paths['/api/payments/ride/{rideId}']").exists())
+                .andExpect(jsonPath("$.paths['/api/payments/passenger/{passengerAccountId}']").exists())
                 .andExpect(jsonPath("$.paths['/api/payments/{paymentId}']").exists());
     }
 }
