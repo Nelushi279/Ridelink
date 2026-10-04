@@ -8,7 +8,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ridelink.account.dto.AccountResponse;
+import com.ridelink.account.dto.AccountValidationResponse;
 import com.ridelink.account.dto.RegisterAccountRequest;
+import com.ridelink.account.exception.AccountNotFoundException;
 import com.ridelink.account.exception.DuplicateEmailException;
 import com.ridelink.account.exception.InvalidRegistrationException;
 import com.ridelink.account.model.Account;
@@ -48,5 +50,11 @@ public class AccountService {
             // The unique email index also protects concurrent registration requests.
             throw new DuplicateEmailException(exception);
         }
+    }
+
+    public AccountValidationResponse getAccountValidation(String accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(AccountNotFoundException::new);
+        return AccountValidationResponse.from(account);
     }
 }
