@@ -35,6 +35,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ApiError> handlePaymentNotFound(PaymentNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(FareAlreadyPaidException.class)
+    public ResponseEntity<ApiError> handleFareAlreadyPaid(FareAlreadyPaidException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedError() {
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", Map.of());
