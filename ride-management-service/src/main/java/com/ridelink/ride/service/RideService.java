@@ -1,9 +1,13 @@
 package com.ridelink.ride.service;
 
+import com.ridelink.ride.client.AccountServiceClient;
+import com.ridelink.ride.client.DriverVehicleServiceClient;
 import com.ridelink.ride.dto.AssignDriverRequest;
 import com.ridelink.ride.dto.CreateRideRequest;
 import com.ridelink.ride.dto.LocationDto;
 import com.ridelink.ride.dto.RideResponse;
+import com.ridelink.ride.exception.InvalidDriverException;
+import com.ridelink.ride.exception.InvalidPassengerException;
 import com.ridelink.ride.exception.InvalidRideStateException;
 import com.ridelink.ride.exception.RideNotFoundException;
 import com.ridelink.ride.model.Ride;
@@ -17,12 +21,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class RideService {
     private final RideRepository rideRepository;
+    private final AccountServiceClient accountServiceClient;
+    private final DriverVehicleServiceClient driverVehicleServiceClient;
 
-    public RideService(RideRepository rideRepository) {
+    public RideService(
+            RideRepository rideRepository,
+            AccountServiceClient accountServiceClient,
+            DriverVehicleServiceClient driverVehicleServiceClient) {
         this.rideRepository = rideRepository;
+        this.accountServiceClient = accountServiceClient;
+        this.driverVehicleServiceClient = driverVehicleServiceClient;
     }
 
     public RideResponse createRide(CreateRideRequest request) {
+        var account = accountServiceClient.getAccountValidation(request.passengerAccountId());
+        if (!"PASSENGER".equals(account.role()) || !"ACTIVE".equals(account.status())) {
+            throw new InvalidPassengerException();
+        }
+
         Instant now = Instant.now();
         Ride ride = new Ride();
         ride.setPassengerAccountId(request.passengerAccountId());
@@ -54,8 +70,12 @@ public class RideService {
             throw new InvalidRideStateException(ride.getStatus());
         }
 
+        var driver = driverVehicleServiceClient.getDriverEligibility(request.driverId());
+        if (!Boolean.TRUE.equals(driver.eligible())) {
+            throw new InvalidDriverException();
+        }
+
         Instant now = Instant.now();
-        // Driver validation is deferred to the future Driver Service REST integration.
         ride.setDriverId(request.driverId());
         ride.setStatus(RideStatus.ASSIGNED);
         ride.setAssignedAt(now);

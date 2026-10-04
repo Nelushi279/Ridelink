@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.ridelink.ride.client.AccountServiceClient;
+import com.ridelink.ride.client.DriverVehicleServiceClient;
 import com.ridelink.ride.exception.InvalidRideStateException;
 import com.ridelink.ride.exception.RideNotFoundException;
 import com.ridelink.ride.model.Ride;
@@ -29,7 +31,8 @@ class RideLifecycleServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(RideRepository.class);
-        service = new RideService(repository);
+        service = new RideService(repository, mock(AccountServiceClient.class),
+                mock(DriverVehicleServiceClient.class));
     }
 
     @Test

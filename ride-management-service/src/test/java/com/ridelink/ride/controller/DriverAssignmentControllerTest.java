@@ -7,9 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.ridelink.ride.dto.LocationDto;
 import com.ridelink.ride.dto.RideResponse;
-import com.ridelink.ride.exception.GlobalExceptionHandler;
-import com.ridelink.ride.exception.InvalidRideStateException;
-import com.ridelink.ride.exception.RideNotFoundException;
+import com.ridelink.ride.exception.*;
 import com.ridelink.ride.model.RideStatus;
 import com.ridelink.ride.service.RideService;
 import java.time.Instant;
@@ -78,6 +76,43 @@ class DriverAssignmentControllerTest {
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message")
                         .value("Ride cannot be assigned from status ASSIGNED"));
+    }
+
+    @Test
+    void missingDriverReturnsNotFound() throws Exception {
+        when(rideService.assignDriver(eq("ride-123"), any()))
+                .thenThrow(new DriverNotFoundException("driver-123"));
+
+        mockMvc.perform(patch("/api/rides/ride-123/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"driverId\":\"driver-123\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Driver not found: driver-123"));
+    }
+
+    @Test
+    void ineligibleDriverReturnsConflict() throws Exception {
+        when(rideService.assignDriver(eq("ride-123"), any()))
+                .thenThrow(new InvalidDriverException());
+
+        mockMvc.perform(patch("/api/rides/ride-123/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"driverId\":\"driver-123\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Driver is not eligible for assignment"));
+    }
+
+    @Test
+    void unavailableDriverServiceReturnsServiceUnavailable() throws Exception {
+        when(rideService.assignDriver(eq("ride-123"), any()))
+                .thenThrow(new ExternalServiceUnavailableException("Driver & Vehicle Service"));
+
+        mockMvc.perform(patch("/api/rides/ride-123/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"driverId\":\"driver-123\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message")
+                        .value("Driver & Vehicle Service is unavailable"));
     }
 
     private RideResponse assignedResponse() {
