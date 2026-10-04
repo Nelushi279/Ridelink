@@ -2,6 +2,7 @@ package com.ridelink.farepayment.controller;
 
 import com.ridelink.farepayment.dto.CreatePaymentRequest;
 import com.ridelink.farepayment.dto.PaymentResponse;
+import com.ridelink.farepayment.dto.ReceiptResponse;
 import com.ridelink.farepayment.exception.ApiError;
 import com.ridelink.farepayment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,5 +57,32 @@ public class PaymentController {
     })
     public PaymentResponse getPayment(@PathVariable String paymentId) {
         return paymentService.getById(paymentId);
+    }
+
+    @GetMapping("/{paymentId}/receipt")
+    @Operation(summary = "Get the receipt of a completed payment")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Receipt returned"),
+        @ApiResponse(responseCode = "404", description = "Payment not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Payment is not COMPLETED",
+                content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ReceiptResponse getReceipt(@PathVariable String paymentId) {
+        return paymentService.getReceipt(paymentId);
+    }
+
+    @GetMapping("/ride/{rideId}")
+    @Operation(summary = "Get all payment attempts of a ride, newest first")
+    @ApiResponse(responseCode = "200", description = "Ride payments returned")
+    public List<PaymentResponse> getRidePayments(@PathVariable String rideId) {
+        return paymentService.getByRideId(rideId);
+    }
+
+    @GetMapping("/passenger/{passengerAccountId}")
+    @Operation(summary = "Get the payment history of a passenger, newest first")
+    @ApiResponse(responseCode = "200", description = "Passenger payments returned")
+    public List<PaymentResponse> getPassengerPayments(@PathVariable String passengerAccountId) {
+        return paymentService.getByPassenger(passengerAccountId);
     }
 }

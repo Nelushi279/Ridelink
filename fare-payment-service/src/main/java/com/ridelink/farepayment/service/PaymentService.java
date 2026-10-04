@@ -2,13 +2,16 @@ package com.ridelink.farepayment.service;
 
 import com.ridelink.farepayment.dto.CreatePaymentRequest;
 import com.ridelink.farepayment.dto.PaymentResponse;
+import com.ridelink.farepayment.dto.ReceiptResponse;
 import com.ridelink.farepayment.exception.FareAlreadyPaidException;
 import com.ridelink.farepayment.exception.PaymentNotFoundException;
+import com.ridelink.farepayment.exception.ReceiptNotAvailableException;
 import com.ridelink.farepayment.model.Fare;
 import com.ridelink.farepayment.model.Payment;
 import com.ridelink.farepayment.model.PaymentStatus;
 import com.ridelink.farepayment.repository.PaymentRepository;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -59,6 +62,40 @@ public class PaymentService {
 
     public PaymentResponse getById(String paymentId) {
         return toResponse(findPayment(paymentId));
+    }
+
+    public List<PaymentResponse> getByRideId(String rideId) {
+        return paymentRepository.findByRideIdOrderByCreatedAtDesc(rideId).stream().map(this::toResponse).toList();
+    }
+
+    public List<PaymentResponse> getByPassenger(String passengerAccountId) {
+        return paymentRepository.findByPassengerAccountIdOrderByCreatedAtDesc(passengerAccountId).stream()
+                .map(this::toResponse).toList();
+    }
+
+    /** A receipt exists only for a COMPLETED payment. */
+    public ReceiptResponse getReceipt(String paymentId) {
+        Payment payment = findPayment(paymentId);
+        if (payment.getPaymentStatus() != PaymentStatus.COMPLETED) {
+            throw new ReceiptNotAvailableException(payment.getPaymentStatus());
+        }
+        Fare fare = fareService.findFare(payment.getFareId());
+        return new ReceiptResponse(
+                payment.getReceiptNumber(),
+                payment.getId(),
+                payment.getRideId(),
+                payment.getFareId(),
+                payment.getPassengerAccountId(),
+                fare.getDistanceKm(),
+                fare.getDurationMinutes(),
+                fare.getBaseFare(),
+                fare.getDistanceFare(),
+                fare.getTimeFare(),
+                payment.getAmount(),
+                payment.getCurrency(),
+                payment.getPaymentMethod(),
+                payment.getTransactionReference(),
+                payment.getPaidAt());
     }
 
     private void settle(Payment payment, boolean simulateFailure, Instant now) {
