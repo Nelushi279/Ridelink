@@ -11,7 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration"
+})
 @AutoConfigureMockMvc
 class OpenApiTest {
     @Autowired
@@ -31,6 +35,12 @@ class OpenApiTest {
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/accept']").exists())
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/start']").exists())
                 .andExpect(jsonPath("$.paths['/api/rides/{rideId}/complete']").exists())
-                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/cancel']").exists());
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/cancel']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides'].post.responses['404']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides'].post.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides'].post.responses['503']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/assign'].patch.responses['404']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/assign'].patch.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/api/rides/{rideId}/assign'].patch.responses['503']").exists());
     }
 }

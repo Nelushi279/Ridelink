@@ -57,6 +57,27 @@ class RideControllerTest {
    .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Malformed JSON request"));
  }
 
+ @Test void missingPassengerAccountIsNotFound() throws Exception {
+  when(service.createRide(any())).thenThrow(new PassengerAccountNotFoundException("account-123"));
+  mvc.perform(post("/api/rides").contentType(MediaType.APPLICATION_JSON).content(VALID))
+   .andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404))
+   .andExpect(jsonPath("$.message").value("Passenger account not found: account-123"));
+ }
+
+ @Test void invalidPassengerAccountIsConflict() throws Exception {
+  when(service.createRide(any())).thenThrow(new InvalidPassengerException());
+  mvc.perform(post("/api/rides").contentType(MediaType.APPLICATION_JSON).content(VALID))
+   .andExpect(status().isConflict()).andExpect(jsonPath("$.status").value(409))
+   .andExpect(jsonPath("$.message").value("Account must be an ACTIVE PASSENGER"));
+ }
+
+ @Test void unavailableAccountServiceReturnsServiceUnavailable() throws Exception {
+  when(service.createRide(any())).thenThrow(new ExternalServiceUnavailableException("Account Service"));
+  mvc.perform(post("/api/rides").contentType(MediaType.APPLICATION_JSON).content(VALID))
+   .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.status").value(503))
+   .andExpect(jsonPath("$.message").value("Account Service is unavailable"));
+ }
+
  @Test void getsRideById() throws Exception {
   when(service.getRideById("ride-123")).thenReturn(response("ride-123"));
   mvc.perform(get("/api/rides/ride-123")).andExpect(status().isOk())

@@ -4,28 +4,42 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.ridelink.ride.client.AccountServiceClient;
+import com.ridelink.ride.client.DriverVehicleServiceClient;
 import com.ridelink.ride.dto.CreateRideRequest;
 import com.ridelink.ride.dto.LocationDto;
+import com.ridelink.ride.exception.ExternalServiceUnavailableException;
+import com.ridelink.ride.exception.InvalidPassengerException;
+import com.ridelink.ride.exception.PassengerAccountNotFoundException;
 import com.ridelink.ride.exception.RideNotFoundException;
 import com.ridelink.ride.model.Ride;
 import com.ridelink.ride.model.RideLocation;
 import com.ridelink.ride.model.RideStatus;
 import com.ridelink.ride.repository.RideRepository;
+import com.ridelink.ride.integration.dto.AccountValidationResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 
 class RideServiceTest {
     private RideRepository repository;
+    private AccountServiceClient accountServiceClient;
+    private DriverVehicleServiceClient driverVehicleServiceClient;
     private RideService service;
 
     @BeforeEach
     void setUp() {
         repository = mock(RideRepository.class);
-        service = new RideService(repository);
+        accountServiceClient = mock(AccountServiceClient.class);
+        driverVehicleServiceClient = mock(DriverVehicleServiceClient.class);
+        when(accountServiceClient.getAccountValidation("account-123"))
+                .thenReturn(new AccountValidationResponse("account-123", "PASSENGER", "ACTIVE"));
+        service = new RideService(repository, accountServiceClient, driverVehicleServiceClient);
     }
 
     @Test
@@ -38,7 +52,9 @@ class RideServiceTest {
 
         var response = service.createRide(request());
         ArgumentCaptor<Ride> captor = ArgumentCaptor.forClass(Ride.class);
-        verify(repository).save(captor.capture());
+        var order = inOrder(accountServiceClient, repository);
+        order.verify(accountServiceClient).getAccountValidation("account-123");
+        order.verify(repository).save(captor.capture());
         Ride saved = captor.getValue();
 
         assertEquals("ride-123", response.id());
@@ -63,6 +79,42 @@ class RideServiceTest {
         assertNotNull(saved.getRequestedAt());
         assertEquals(saved.getRequestedAt(), saved.getCreatedAt());
         assertEquals(saved.getCreatedAt(), saved.getUpdatedAt());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "PASSENGER, INACTIVE",
+        "PASSENGER, SUSPENDED",
+        "DRIVER, ACTIVE",
+        "ADMIN, ACTIVE"
+    })
+    void rejectsAccountThatIsNotAnActivePassenger(String role, String status) {
+        when(accountServiceClient.getAccountValidation("account-123"))
+                .thenReturn(new AccountValidationResponse("account-123", role, status));
+
+        assertThrows(InvalidPassengerException.class, () -> service.createRide(request()));
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void rejectsMissingPassengerWithoutSavingRide() {
+        when(accountServiceClient.getAccountValidation("account-123"))
+                .thenThrow(new PassengerAccountNotFoundException("account-123"));
+
+        assertThrows(PassengerAccountNotFoundException.class, () -> service.createRide(request()));
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void rejectsUnavailableAccountServiceWithoutSavingRide() {
+        when(accountServiceClient.getAccountValidation("account-123"))
+                .thenThrow(new ExternalServiceUnavailableException("Account Service"));
+
+        assertThrows(ExternalServiceUnavailableException.class, () -> service.createRide(request()));
+
+        verify(repository, never()).save(any());
     }
 
     @Test

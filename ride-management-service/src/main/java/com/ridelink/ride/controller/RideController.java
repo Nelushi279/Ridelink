@@ -34,10 +34,17 @@ public class RideController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a ride request")
+    @Operation(summary = "Create a ride request",
+            description = "The passenger account must exist and be an ACTIVE PASSENGER")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Ride request created"),
         @ApiResponse(responseCode = "400", description = "Invalid request data",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "404", description = "Passenger account not found",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "409", description = "Account is not an ACTIVE PASSENGER",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "503", description = "Account Service unavailable",
                 content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<RideResponse> createRide(@Valid @RequestBody CreateRideRequest request) {
@@ -64,14 +71,17 @@ public class RideController {
     }
 
     @PatchMapping("/{rideId}/assign")
-    @Operation(summary = "Assign a driver to a requested ride")
+    @Operation(summary = "Assign a driver to a requested ride",
+            description = "The driver must be eligible according to Driver & Vehicle Service")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Driver assigned"),
         @ApiResponse(responseCode = "400", description = "Invalid assignment request",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
-        @ApiResponse(responseCode = "404", description = "Ride not found",
+        @ApiResponse(responseCode = "404", description = "Ride or driver not found",
                 content = @Content(schema = @Schema(implementation = ApiError.class))),
-        @ApiResponse(responseCode = "409", description = "Ride is not in REQUESTED status",
+        @ApiResponse(responseCode = "409", description = "Invalid ride state or ineligible driver",
+                content = @Content(schema = @Schema(implementation = ApiError.class))),
+        @ApiResponse(responseCode = "503", description = "Driver & Vehicle Service unavailable",
                 content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public RideResponse assignDriver(
